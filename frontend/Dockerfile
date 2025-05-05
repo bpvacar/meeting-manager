@@ -6,8 +6,12 @@ RUN yarn install --frozen-lockfile
 COPY . .
 RUN yarn build
 
-# 2) Servir con Nginx
+# segunda etapa: nginx
 FROM nginx:alpine
 COPY --from=build /app/build /usr/share/nginx/html
-EXPOSE 80
+
+# Reconfigura Nginx para escuchar en el 3000
+RUN sed -i 's/listen       80;/listen       3000;/' /etc/nginx/conf.d/default.conf
+
+EXPOSE 3000
 CMD ["nginx", "-g", "daemon off;"]
