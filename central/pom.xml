@@ -5,15 +5,13 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.1.5</version>
-        <relativePath/>
+        <groupId>com.example</groupId>
+        <artifactId>meeting-manager</artifactId>
+        <version>1.0.0</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <groupId>com.example</groupId>
-    <artifactId>meeting-manager-central</artifactId>
-    <version>1.0.0</version>
+    <artifactId>central</artifactId>
     <packaging>jar</packaging>
 
     <dependencies>

@@ -1,69 +1,40 @@
 services:
+  central:
+    build:
+      context: .
+      dockerfile: Dockerfile.central
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+      - redis
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/meetings
+      SPRING_DATASOURCE_USERNAME: admin
+      SPRING_DATASOURCE_PASSWORD: secret
+      REDIS_HOST: redis
+
+  employee:
+    build:
+      context: .
+      dockerfile: Dockerfile.employee
+    depends_on:
+      - central
+    environment:
+      CENTRAL_WS_URL: ws://central:8080/ws
+
   db:
     image: postgres:15
-    container_name: meetings-db
     environment:
       POSTGRES_DB: meetings
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: secret
     volumes:
       - db_data:/var/lib/postgresql/data
-    networks:
-      - app-net
 
   redis:
     image: redis:7
-    container_name: meetings-redis
     command: ["redis-server", "--save", "60", "1"]
-    networks:
-      - app-net
-
-  central:
-    build:
-      context: central
-    image: benjamin6942/meeting-manager-central:latest
-    container_name: meeting-manager-central
-    ports:
-      - "8080:8080"
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/meetings
-      SPRING_DATASOURCE_USERNAME: admin
-      SPRING_DATASOURCE_PASSWORD: secret
-      REDIS_HOST: redis
-    depends_on:
-      - db
-      - redis
-    networks:
-      - app-net
-
-  employee:
-    build:
-      context: employee
-    image: benjamin6942/meeting-manager-employee:latest
-    container_name: meeting-manager-employee
-    # si el microservicio necesita variables, añádelas aquí:
-    # environment:
-    #   CENTRAL_WS_URL: ws://central:8080/ws
-    depends_on:
-      - central
-    networks:
-      - app-net
-
-  frontend:
-    build:
-      context: ./frontend
-    image: benjamin6942/meeting-manager-frontend:latest
-    container_name: meeting-manager-frontend
-    ports:
-      - "3000:80"
-    depends_on:
-      - central
-    networks:
-      - app-net
 
 volumes:
   db_data:
-
-networks:
-  app-net:
-    driver: bridge
