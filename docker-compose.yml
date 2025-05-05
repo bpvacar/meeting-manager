@@ -1,3 +1,17 @@
+x-employee-common: &employee-common
+  build:
+    context: .
+    dockerfile: Dockerfile.employee
+  depends_on:
+    - central
+    - db
+    - redis
+  environment:
+    SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/meetings
+    SPRING_DATASOURCE_USERNAME: admin
+    SPRING_DATASOURCE_PASSWORD: secret
+    CENTRAL_WS_URL: ws://central:8080/ws
+
 services:
   central:
     build:
@@ -15,44 +29,42 @@ services:
       SPRING_DATASOURCE_USERNAME: admin
       SPRING_DATASOURCE_PASSWORD: secret
       REDIS_HOST: redis
-      SPRING_CONFIG_LOCATION: file:/app/config/central.properties
 
-  # Definimos un bloque común para los servicios employee
-  x-employee-common: &employee-common
-    build:
-      context: .
-      dockerfile: Dockerfile.employee
-    depends_on:
-      - central
-      - db
-      - redis
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/meetings
-      SPRING_DATASOURCE_USERNAME: admin
-      SPRING_DATASOURCE_PASSWORD: secret
-      CENTRAL_WS_URL: ws://central:8080/ws
-
-  # Cinco servicios de empleado con puertos únicos
   employee1:
     <<: *employee-common
     ports:
       - "8081:8081"
+    environment:
+      - PORT=8081
+
   employee2:
     <<: *employee-common
     ports:
       - "8082:8081"
+    environment:
+      - PORT=8082
+
+
   employee3:
     <<: *employee-common
     ports:
       - "8083:8081"
+    environment:
+      - PORT=8083
+
   employee4:
     <<: *employee-common
     ports:
       - "8084:8081"
+    environment:
+      - PORT=8084
+
   employee5:
     <<: *employee-common
     ports:
       - "8085:8081"
+    environment:
+      - PORT=8085
 
   db:
     image: postgres:15
@@ -65,7 +77,11 @@ services:
 
   redis:
     image: redis:7
-    command: ["redis-server", "--save", "60", "1"]
+    command:
+      - redis-server
+      - "--save"
+      - "60"
+      - "1"
 
   frontend:
     build:
