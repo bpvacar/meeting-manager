@@ -1,18 +1,18 @@
 services:
   central:
-    build: ./meeting-manager-central
+    build: aaaa
     image: benjamin6942/meeting-manager-central:latest
     ports:
       - "8080:8080"
   employee1:
-    build: ./meeting-manager-employee
+    build: meeting-manager-employee
     image: benjamin6942/meeting-manager-employee:emp1
     environment:
       EMPLOYEE_NAME: emp1
     depends_on:
       - central
   employee2:
-    build: ./meeting-manager-employee
+    build: meeting-manager-employee
     image: benjamin6942/meeting-manager-employee:emp2
     environment:
       EMPLOYEE_NAME: emp2
