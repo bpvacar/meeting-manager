@@ -2,21 +2,26 @@
 FROM maven:3.9-eclipse-temurin-17 AS build
 WORKDIR /app
 
-# 1) Copiamos el POM raíz y los módulos
-COPY pom.xml .
-COPY central/pom.xml central/pom.xml
-COPY employee/pom.xml employee/pom.xml
-COPY central/src central/src
-COPY employee/src employee/src
+# 1) Trae el pom padre y los poms de ambos módulos
+COPY pom.xml            /app/pom.xml
+COPY central/pom.xml    /app/central/pom.xml
+COPY employee/pom.xml   /app/employee/pom.xml
 
-# 2) Cacheamos dependencias
-RUN mvn dependency:go-offline -B
+# 2) Copia solo el código de central
+COPY central/src        /app/central/src
 
-# 3) Compilamos sólo central (+ sus dependencias)
-RUN mvn package -pl central -am -DskipTests -B
+# 3) Instala el descriptor del parent POM
+RUN mvn install -N -DskipTests -B
 
-# 4) Creamos la imagen de runtime
+# 4) Empaqueta únicamente central (con spring-boot:repackage en tu central/pom.xml)
+RUN mvn clean package -pl central -DskipTests -B
+
+# ---- Stage runtime ----
 FROM openjdk:17-jdk-slim
 WORKDIR /app
-COPY --from=build /app/central/target/central-1.0.0.jar app.jar
+
+# 5) Copia el JAR “exec” que sí trae el Main-Class
+COPY --from=build /app/central/target/central-1.0.0-exec.jar app.jar
+
+EXPOSE 8080
 ENTRYPOINT ["java","-jar","/app/app.jar"]

@@ -18,9 +18,16 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.employee
+    ports:
+      - "8081:8081"
     depends_on:
       - central
+      - db
+      - redis
     environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/meetings
+      SPRING_DATASOURCE_USERNAME: admin
+      SPRING_DATASOURCE_PASSWORD: secret
       CENTRAL_WS_URL: ws://central:8080/ws
 
   db:
@@ -35,6 +42,15 @@ services:
   redis:
     image: redis:7
     command: ["redis-server", "--save", "60", "1"]
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - central
+      - employee
 
 volumes:
   db_data:

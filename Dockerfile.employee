@@ -1,22 +1,19 @@
-# Dockerfile.employee
 FROM maven:3.9-eclipse-temurin-17 AS build
 WORKDIR /app
 
-# 1) Copiamos igual todo
-COPY pom.xml .
-COPY central/pom.xml central/pom.xml
-COPY employee/pom.xml employee/pom.xml
-COPY central/src central/src
-COPY employee/src employee/src
+COPY pom.xml           /app/pom.xml
+COPY central/pom.xml   /app/central/pom.xml
+COPY employee/pom.xml  /app/employee/pom.xml
 
-# 2) Cacheamos dependencias
-RUN mvn dependency:go-offline -B
+COPY central/src       /app/central/src
+COPY employee/src      /app/employee/src
 
-# 3) Compilamos sólo employee (+ sus dependencias)
-RUN mvn package -pl employee -am -DskipTests -B
+RUN mvn install -N -DskipTests -B
+RUN mvn clean install -pl central -DskipTests -B
+RUN mvn clean package -pl employee -DskipTests -B
 
-# 4) Imagen de runtime
 FROM openjdk:17-jdk-slim
 WORKDIR /app
-COPY --from=build /app/employee/target/employee-1.0.0.jar app.jar
+COPY --from=build /app/employee/target/employee-1.0.0.jar ./app.jar
+EXPOSE 8081
 ENTRYPOINT ["java","-jar","/app/app.jar"]
