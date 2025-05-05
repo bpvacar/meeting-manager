@@ -1,24 +1,69 @@
 services:
+  db:
+    image: postgres:15
+    container_name: meetings-db
+    environment:
+      POSTGRES_DB: meetings
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: secret
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - app-net
+
+  redis:
+    image: redis:7
+    container_name: meetings-redis
+    command: ["redis-server", "--save", "60", "1"]
+    networks:
+      - app-net
+
   central:
-    build: aaaa
-    image: benjamin6942/meeting-manager-central:latest
+    build:
+      context: ./meeting-manager-central
+    image: bpvacar/meeting-manager-central:latest
+    container_name: meeting-manager-central
     ports:
       - "8080:8080"
-  employee1:
-    build: meeting-manager-employee
-    image: benjamin6942/meeting-manager-employee:emp1
     environment:
-      EMPLOYEE_NAME: emp1
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/meetings
+      SPRING_DATASOURCE_USERNAME: admin
+      SPRING_DATASOURCE_PASSWORD: secret
+      REDIS_HOST: redis
+    depends_on:
+      - db
+      - redis
+    networks:
+      - app-net
+
+  employee:
+    build:
+      context: ./meeting-manager-employee
+    image: bpvacar/meeting-manager-employee:latest
+    container_name: meeting-manager-employee
+    # si el microservicio necesita variables, añádelas aquí:
+    # environment:
+    #   CENTRAL_WS_URL: ws://central:8080/ws
     depends_on:
       - central
-  employee2:
-    build: meeting-manager-employee
-    image: benjamin6942/meeting-manager-employee:emp2
-    environment:
-      EMPLOYEE_NAME: emp2
+    networks:
+      - app-net
+
+  frontend:
+    build:
+      context: ./frontend
+    image: bpvacar/meeting-manager-frontend:latest
+    container_name: meeting-manager-frontend
+    ports:
+      - "3000:80"
     depends_on:
       - central
-  # repetir employee3,4,5...
+    networks:
+      - app-net
+
 volumes:
-  data:
-    driver: local
+  db_data:
+
+networks:
+  app-net:
+    driver: bridge
