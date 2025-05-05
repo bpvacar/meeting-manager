@@ -1,36 +1,24 @@
 services:
-  db:
-    image: postgres:15
-    environment:
-      POSTGRES_DB: meetings
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: secret
-    volumes:
-      - db_data:/var/lib/postgresql/data
-
-  redis:
-    image: redis:7
-    command: ["redis-server", "--save", "60", "1"]
-
-  backend:
-    image: benjamin6942/meeting-manager-backend:latest
+  central:
+    build: ./meeting-manager-central
+    image: benjamin6942/meeting-manager-central:latest
     ports:
       - "8080:8080"
+  employee1:
+    build: ./meeting-manager-employee
+    image: benjamin6942/meeting-manager-employee:emp1
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/meetings
-      SPRING_DATASOURCE_USERNAME: admin
-      SPRING_DATASOURCE_PASSWORD: secret
-      REDIS_HOST: redis
+      EMPLOYEE_NAME: emp1
     depends_on:
-      - db
-      - redis
-
-  frontend:
-    image: benjamin6942/meeting-manager-frontend:latest
-    ports:
-      - "3000:80"
+      - central
+  employee2:
+    build: ./meeting-manager-employee
+    image: benjamin6942/meeting-manager-employee:emp2
+    environment:
+      EMPLOYEE_NAME: emp2
     depends_on:
-      - backend
-
+      - central
+  # repetir employee3,4,5...
 volumes:
-  db_data:
+  data:
+    driver: local
