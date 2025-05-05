@@ -8,91 +8,51 @@ services:
     depends_on:
       - db
       - redis
+    volumes:
+      - ./config/central.properties:/app/config/central.properties:ro
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/meetings
       SPRING_DATASOURCE_USERNAME: admin
       SPRING_DATASOURCE_PASSWORD: secret
       REDIS_HOST: redis
+      SPRING_CONFIG_LOCATION: file:/app/config/central.properties
 
-  employee1:
+  # Definimos un bloque común para los servicios employee
+  x-employee-common: &employee-common
     build:
       context: .
       dockerfile: Dockerfile.employee
+    depends_on:
+      - central
+      - db
+      - redis
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/meetings
+      SPRING_DATASOURCE_USERNAME: admin
+      SPRING_DATASOURCE_PASSWORD: secret
+      CENTRAL_WS_URL: ws://central:8080/ws
+
+  # Cinco servicios de empleado con puertos únicos
+  employee1:
+    <<: *employee-common
     ports:
       - "8081:8081"
-    depends_on:
-      - central
-      - db
-      - redis
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/meetings
-      SPRING_DATASOURCE_USERNAME: admin
-      SPRING_DATASOURCE_PASSWORD: secret
-      CENTRAL_WS_URL: ws://central:8080/ws
-
   employee2:
-    build:
-      context: .
-      dockerfile: Dockerfile.employee
+    <<: *employee-common
     ports:
       - "8082:8081"
-    depends_on:
-      - central
-      - db
-      - redis
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/meetings
-      SPRING_DATASOURCE_USERNAME: admin
-      SPRING_DATASOURCE_PASSWORD: secret
-      CENTRAL_WS_URL: ws://central:8080/ws
-
   employee3:
-    build:
-      context: .
-      dockerfile: Dockerfile.employee
+    <<: *employee-common
     ports:
       - "8083:8081"
-    depends_on:
-      - central
-      - db
-      - redis
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/meetings
-      SPRING_DATASOURCE_USERNAME: admin
-      SPRING_DATASOURCE_PASSWORD: secret
-      CENTRAL_WS_URL: ws://central:8080/ws
-
   employee4:
-    build:
-      context: .
-      dockerfile: Dockerfile.employee
+    <<: *employee-common
     ports:
       - "8084:8081"
-    depends_on:
-      - central
-      - db
-      - redis
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/meetings
-      SPRING_DATASOURCE_USERNAME: admin
-      SPRING_DATASOURCE_PASSWORD: secret
-      CENTRAL_WS_URL: ws://central:8080/ws
-
   employee5:
-    build:
-      context: .
-      dockerfile: Dockerfile.employee
+    <<: *employee-common
     ports:
       - "8085:8081"
-    depends_on:
-      - central
-      - db
-      - redis
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/meetings
-      SPRING_DATASOURCE_USERNAME: admin
-      SPRING_DATASOURCE_PASSWORD: secret
-      CENTRAL_WS_URL: ws://central:8080/ws
 
   db:
     image: postgres:15
@@ -106,6 +66,17 @@ services:
   redis:
     image: redis:7
     command: ["redis-server", "--save", "60", "1"]
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    depends_on:
+      - central
+    environment:
+      REACT_APP_API_BASE: http://central:8080
 
 volumes:
   db_data:

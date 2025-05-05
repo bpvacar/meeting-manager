@@ -1,17 +1,7 @@
-# 1) Build de la app React
-FROM node:18-alpine AS build
+FROM node:18-alpine
 WORKDIR /app
-COPY package.json yarn.lock ./
-RUN yarn install --frozen-lockfile
+COPY package.json .
+RUN npm install
 COPY . .
-RUN yarn build
-
-# segunda etapa: nginx
-FROM nginx:alpine
-COPY --from=build /app/build /usr/share/nginx/html
-
-# Reconfigura Nginx para escuchar en el 3000
-RUN sed -i 's/listen       80;/listen       3000;/' /etc/nginx/conf.d/default.conf
-
-EXPOSE 3000
-CMD ["nginx", "-g", "daemon off;"]
+RUN npm run build
+CMD ["npm", "start"]
