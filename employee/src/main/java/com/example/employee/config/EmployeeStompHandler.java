@@ -1,6 +1,6 @@
 package com.example.employee.config;
 
-import com.example.meetingmanager.model.Meeting;
+import com.example.central.model.Meeting;
 import com.example.employee.service.MeetingFileWriter;
 import org.springframework.messaging.simp.stomp.StompSession;
 import org.springframework.messaging.simp.stomp.StompSessionHandlerAdapter;

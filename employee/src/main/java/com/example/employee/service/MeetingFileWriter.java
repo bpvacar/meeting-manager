@@ -1,6 +1,6 @@
 package com.example.employee.service;
 
-import com.example.meetingmanager.model.Meeting;
+import com.example.central.model.Meeting;
 import org.springframework.stereotype.Service;
 
 import java.io.FileWriter;
