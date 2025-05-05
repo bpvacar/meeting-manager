@@ -13,7 +13,7 @@ services:
     command: ["redis-server", "--save", "60", "1"]
 
   backend:
-    build: ../meeting-manager/backend
+    image: benjamin6942/meeting-manager-backend:latest
     ports:
       - "8080:8080"
     environment:
@@ -26,8 +26,7 @@ services:
       - redis
 
   frontend:
-    build:
-      context: frontend
+    image: benjamin6942/meeting-manager-frontend:latest
     ports:
       - "3000:80"
     depends_on:
