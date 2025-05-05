@@ -1,5 +1,5 @@
 target/
-!meeting-manager-central/.mvn/wrapper/maven-wrapper.jar
+!central/.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
 

@@ -20,8 +20,8 @@ services:
 
   central:
     build:
-      context: ./meeting-manager-central
-    image: bpvacar/meeting-manager-central:latest
+      context: central
+    image: benjamin6942/meeting-manager-central:latest
     container_name: meeting-manager-central
     ports:
       - "8080:8080"
@@ -38,8 +38,8 @@ services:
 
   employee:
     build:
-      context: ./meeting-manager-employee
-    image: bpvacar/meeting-manager-employee:latest
+      context: employee
+    image: benjamin6942/meeting-manager-employee:latest
     container_name: meeting-manager-employee
     # si el microservicio necesita variables, añádelas aquí:
     # environment:
@@ -52,7 +52,7 @@ services:
   frontend:
     build:
       context: ./frontend
-    image: bpvacar/meeting-manager-frontend:latest
+    image: benjamin6942/meeting-manager-frontend:latest
     container_name: meeting-manager-frontend
     ports:
       - "3000:80"
