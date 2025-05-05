@@ -4,6 +4,8 @@ import React, { useEffect, useState } from 'react';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 
+import './App.css';
+
 const apiUrl = 'http://localhost:8080/api/meetings';
 
 function App() {
@@ -84,7 +86,7 @@ function App() {
   };
 
   return (
-    <div className="p-4">
+    <div className="App p-4">
       <h1 className="text-2xl font-bold mb-4">Reuniones</h1>
 
       <form onSubmit={handleSubmit} className="mb-6 space-y-2">
