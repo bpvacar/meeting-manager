@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@CrossOrigin(origins = "http://localhost:3000")   // permitir acceso al frontend
 @RestController
 @RequestMapping("/api/meetings")
 public class MeetingController {

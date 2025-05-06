@@ -22,8 +22,6 @@ services:
     depends_on:
       - db
       - redis
-    volumes:
-      - ./config/central.properties:/app/config/central.properties:ro
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/meetings
       SPRING_DATASOURCE_USERNAME: admin
@@ -40,7 +38,7 @@ services:
   employee2:
     <<: *employee-common
     ports:
-      - "8082:8081"
+      - "8082:8082"
     environment:
       - PORT=8082
 
@@ -48,21 +46,21 @@ services:
   employee3:
     <<: *employee-common
     ports:
-      - "8083:8081"
+      - "8083:8083"
     environment:
       - PORT=8083
 
   employee4:
     <<: *employee-common
     ports:
-      - "8084:8081"
+      - "8084:8084"
     environment:
       - PORT=8084
 
   employee5:
     <<: *employee-common
     ports:
-      - "8085:8081"
+      - "8085:8085"
     environment:
       - PORT=8085
 
@@ -91,8 +89,6 @@ services:
       - "3000:3000"
     depends_on:
       - central
-    environment:
-      REACT_APP_API_BASE: http://central:8080
 
 volumes:
   db_data:
