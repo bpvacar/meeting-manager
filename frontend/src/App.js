@@ -1,55 +1,109 @@
-import React, { useEffect, useState, useRef } from 'react';
-
-const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:8080';
+// src/App.js
+import React, { useEffect, useState } from 'react';
+import { Client } from '@stomp/stompjs';
+import SockJS from 'sockjs-client';
 
 function App() {
   const [meetings, setMeetings] = useState([]);
-  const [logs, setLogs] = useState([]);
-  const wsRef = useRef(null);
+  const [title, setTitle]         = useState('');
+  const [startTime, setStartTime] = useState('');
+  const [duration, setDuration]   = useState(30);
 
+  // Fetch from the real backend URL
   useEffect(() => {
-    fetch(`${API_BASE}/api/meetings`)
-      .then(res => res.json())
-      .then(data => setMeetings(data))
+    fetch('http://localhost:8080/api/meetings')
+      .then(res => {
+        if (!res.ok) throw new Error(res.statusText);
+        return res.json();
+      })
+      .then(setMeetings)
       .catch(err => console.error('Error fetching meetings:', err));
   }, []);
 
-  const connectSocket = (employee) => {
-    if (wsRef.current) {
-      wsRef.current.close();
+  // Connect STOMP to the backend
+  useEffect(() => {
+    const socket = new SockJS('http://localhost:8080/ws');
+    const client = new Client({
+      webSocketFactory: () => socket,
+      onConnect: () => {
+        client.subscribe('/topic/meetings', msg => {
+          const newMeeting = JSON.parse(msg.body);
+          setMeetings(ms => [...ms, newMeeting]);
+        });
+      },
+      onStompError: frame => console.error('STOMP error', frame),
+    });
+    client.activate();
+    return () => client.deactivate();
+  }, []);
+
+  const handleSubmit = async e => {
+    e.preventDefault();
+    try {
+      const res = await fetch('http://localhost:8080/api/meetings', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({
+          topic:           title,
+          startTime,       // e.g. "2025-05-07T10:00:00Z"
+          durationMinutes: duration,
+        }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      setTitle('');
+      setStartTime('');
+      setDuration(30);
+    } catch (err) {
+      console.error('Failed to create meeting:', err);
     }
-    const wsUrl = `${API_BASE.replace('http', 'ws')}/ws?employee=${employee}`;
-    const ws = new WebSocket(wsUrl);
-    ws.onopen = () => setLogs(logs => [...logs, `Conectado a ${employee}`]);
-    ws.onmessage = (msg) => setLogs(logs => [...logs, `[${employee}] ${msg.data}`]);
-    ws.onclose = () => setLogs(logs => [...logs, `Desconectado de ${employee}`]);
-    ws.onerror = (err) => setLogs(logs => [...logs, `Error WS: ${err}`]);
-    wsRef.current = ws;
   };
 
   return (
-    <div style={{ padding: '20px', fontFamily: 'Arial' }}>
-      <h1>Meeting Manager Frontend</h1>
+    <div style={{ padding: '1rem', fontFamily: 'Arial, sans-serif' }}>
+      <h1>Meeting Manager</h1>
+
       <section>
+        <h2>Crear nueva reunión</h2>
+        <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '0.5rem', maxWidth: '400px' }}>
+          <input
+            type="text"
+            placeholder="Título de la reunión"
+            value={title}
+            onChange={e => setTitle(e.target.value)}
+            required
+          />
+          <input
+            type="datetime-local"
+            value={startTime}
+            onChange={e => setStartTime(e.target.value)}
+            required
+          />
+          <input
+            type="number"
+            placeholder="Duración (minutos)"
+            value={duration}
+            onChange={e => setDuration(+e.target.value)}
+            min={1}
+            required
+          />
+          <button type="submit">Crear reunión</button>
+        </form>
+      </section>
+
+      <section style={{ marginTop: '2rem' }}>
         <h2>Reuniones</h2>
-        {meetings.length === 0 ? (<p>Cargando...</p>) : (
+        {meetings.length === 0 ? (
+          <p>No hay reuniones aún.</p>
+        ) : (
           <ul>
             {meetings.map(m => (
-              <li key={m.id}>{m.title} - {new Date(m.date).toLocaleString()}</li>
+              <li key={m.id}>
+                <strong>{m.topic || '(sin título)'}</strong> —{' '}
+                {new Date(m.startTime).toLocaleString()} ({m.durationMinutes ?? '—'} min)
+              </li>
             ))}
           </ul>
         )}
-      </section>
-      <section>
-        <h2>Sockets Empleados</h2>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          {['Alice','Bob','Charlie','David','Eve'].map(emp => (
-            <button key={emp} onClick={() => connectSocket(emp)}>{emp}</button>
-          ))}
-        </div>
-        <div style={{ marginTop: '10px', maxHeight: '200px', overflowY: 'auto', border: '1px solid #ccc', padding: '10px' }}>
-          {logs.map((l,i) => <div key={i}>{l}</div>)}
-        </div>
       </section>
     </div>
   );
