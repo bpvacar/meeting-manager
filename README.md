@@ -1,81 +1,152 @@
+Thought for a second
+
+
+
 # Meeting Manager
 
-Este proyecto es una aplicación de gestión de reuniones con **frontend** en React y **backend** en Spring Boot, orquestado mediante Docker Compose.
-
-## Estructura del repositorio
-
-```
-meeting-manager/           # Raíz del proyecto
-├── README.md              # Documentación
-├── docker-compose.yml     # Orquestación de servicios
-├── backend/               # Carpeta con el código Java/Spring Boot
-│   ├── Dockerfile
-│   └── src/...
-└── frontend/              # Carpeta con el código React
-    ├── Dockerfile
-    └── src/...
-```
+A microservices-based meeting coordination app built with Spring Boot, Docker Compose, and React.  
+Each “employee” runs in its own container/port, subscribing over STOMP/WebSocket to real-time meeting invitations from a central orchestrator.
 
 ---
 
-## Prerrequisitos
+## Architecture
 
-* [Docker](https://www.docker.com/get-started) instalado.
-* [Docker Compose](https://docs.docker.com/compose/install/) (opcional si usas `docker compose`).
+- **Central** (`meeting-manager-central`):  
+  - Spring Boot REST API & WebSocket broker  
+  - Stores meetings & invites in PostgreSQL  
+  - Broadcasts new meetings to all employees via STOMP `/topic/meetings`  
+  - Sends per-user invites via STOMP `/user/{name}/queue/invites`
+
+- **Employees** (`meeting-manager-employee`):  
+  - Five identical Spring Boot apps (Alice, Bob, Charlie, David, Eve)  
+  - Each listens on its own port (8081–8085)  
+  - Connects to Central’s WebSocket, handles user-specific `/queue/invites` messages  
+
+- **Frontend** (`meeting-manager-frontend`):  
+  - React app served on port 3000  
+  - Fetches meeting list from Central’s REST API  
+  - Subscribes to `/topic/meetings` for live updates  
+  - Offers a form to create new meetings  
+
+- **PostgreSQL** (`postgres:15`): persisting meetings & invites  
+- **Redis** (`redis:7`): optional pub/sub broker  
 
 ---
 
-## Ejecución local con Docker Compose
+## Getting Started
 
-1. Clona el repositorio:
+### Prerequisites
 
+- Docker & Docker Compose installed  
+- (Optional) Docker Hub account for pulling pre-built images  
+
+### Local Development (Source Builds)
+
+1. **Clone repository**  
    ```bash
    git clone https://github.com/bpvacar/meeting-manager.git
    cd meeting-manager
-   ```
+````
 
-2. Construye y levanta los servicios:
+2. **Build & run everything**
 
    ```bash
-   # Con Docker Compose V2:
-   docker compose up --build -d
-
-   # O con Docker Compose V1:
-   docker-compose up --build -d
+   docker compose up --build
    ```
 
-3. Accede a:
+3. **Open the React UI**
+   [http://localhost:3000](http://localhost:3000)
 
-    * **Frontend:** [http://localhost:3000](http://localhost:3000)
-    * **API (backend):** [http://localhost:8080/api/meetings](http://localhost:8080/api/meetings)
+4. **Inspect services**
+
+   ```bash
+   docker compose ps
+   ```
 
 ---
 
-## Uso de imágenes desde Docker Hub
+## Using the API
 
-Si prefieres no construir localmente, puedes usar las imágenes publicadas en Docker Hub:
+All Central endpoints are under `/api/meetings`.
 
-1. Descarga las imágenes:
+* **List meetings**
 
-   ```bash
-   docker pull benjamin6942/meeting-manager-backend:latest
-   docker pull benjamin6942/meeting-manager-frontend:latest
+  ```bash
+  curl http://localhost:8080/api/meetings
+  ```
+
+* **Create a meeting**
+
+  ```bash
+  curl -X POST http://localhost:8080/api/meetings \
+    -H "Content-Type: application/json" \
+    -d '{
+      "topic":"Team Sync",
+      "startTime":"2025-05-07T10:00:00Z",
+      "durationMinutes":30
+    }'
+  ```
+
+* **Invite an employee**
+
+  ```bash
+  curl -X POST http://localhost:8080/api/meetings/1/invites \
+    -H "Content-Type: application/json" \
+    -d '{ "employeeName":"Alice" }'
+  ```
+
+---
+
+## Docker Hub Deployment
+
+If you’ve pushed images to Docker Hub:
+
+1. **Edit `docker-compose.yml`** to use your Hub images:
+
+   ```yaml
+   central:
+     image: bpvacar/meeting-manager-central:latest
+   employee1:
+     image: bpvacar/meeting-manager-employee:latest
+   # …
+   frontend:
+     image: bpvacar/meeting-manager-frontend:latest
    ```
-
-2. Modifica `docker-compose.yml` para usar las imágenes (ya publicado en la rama `main`).
-
-3. Levanta los servicios:
+2. **Pull & run**
 
    ```bash
+   docker compose pull
    docker compose up -d
    ```
 
 ---
 
-## Limpieza
+## Project Structure
 
-Para detener y eliminar contenedores, redes y volúmenes:
-
-```bash
-docker compose down -v
 ```
+.
+├── central/          # Spring Boot central orchestrator
+│   ├── src/main/java/com/example/central
+│   └── Dockerfile.central
+├── employee/         # Spring Boot employee instance
+│   ├── src/main/java/com/example/employee
+│   └── Dockerfile.employee
+├── frontend/         # React UI
+│   ├── src/
+│   ├── public/
+│   └── Dockerfile
+└── docker-compose.yml
+```
+
+---
+
+## Contributing
+
+1. Fork & clone
+2. Create a feature branch
+3. Submit a Pull Request
+
+---
+
+
+

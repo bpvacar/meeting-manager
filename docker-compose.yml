@@ -1,33 +1,31 @@
 x-employee-common: &employee-common
-  build:
-    context: .
-    dockerfile: Dockerfile.employee
+  image: benjamin6942/meeting-manager-employee:latest
   depends_on:
     - central
     - db
     - redis
   environment:
-    SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/meetings
+    SPRING_DATASOURCE_URL:      jdbc:postgresql://db:5432/meetings
     SPRING_DATASOURCE_USERNAME: admin
     SPRING_DATASOURCE_PASSWORD: secret
-    CENTRAL_WS_URL: ws://central:8080/ws
+    CENTRAL_WS_URL:             ws://central:8080/ws
 
 services:
+  # Central service, pulled from your Docker Hub repo
   central:
-    build:
-      context: .
-      dockerfile: Dockerfile.central
+    image: benjamin6942/meeting-manager-central:latest
     ports:
       - "8080:8080"
     depends_on:
       - db
       - redis
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/meetings
+      SPRING_DATASOURCE_URL:      jdbc:postgresql://db:5432/meetings
       SPRING_DATASOURCE_USERNAME: admin
       SPRING_DATASOURCE_PASSWORD: secret
-      REDIS_HOST: redis
+      REDIS_HOST:                redis
 
+  # Five identical employee containers, each on its own port
   employee1:
     <<: *employee-common
     ports:
@@ -41,7 +39,6 @@ services:
       - "8082:8082"
     environment:
       - PORT=8082
-
 
   employee3:
     <<: *employee-common
@@ -64,15 +61,17 @@ services:
     environment:
       - PORT=8085
 
+  # Postgres database
   db:
     image: postgres:15
     environment:
-      POSTGRES_DB: meetings
-      POSTGRES_USER: admin
+      POSTGRES_DB:       meetings
+      POSTGRES_USER:     admin
       POSTGRES_PASSWORD: secret
     volumes:
       - db_data:/var/lib/postgresql/data
 
+  # Redis for pub/sub (if still used by your stack)
   redis:
     image: redis:7
     command:
@@ -81,10 +80,9 @@ services:
       - "60"
       - "1"
 
+  # Frontend service
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
+    image: benjamin6942/meeting-manager-frontend:latest
     ports:
       - "3000:3000"
     depends_on:
