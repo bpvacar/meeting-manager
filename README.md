@@ -1,7 +1,3 @@
-Thought for a second
-
-
-
 # Meeting Manager
 
 A microservices-based meeting coordination app built with Spring Boot, Docker Compose, and React.  
@@ -46,7 +42,7 @@ Each “employee” runs in its own container/port, subscribing over STOMP/WebSo
    ```bash
    git clone https://github.com/bpvacar/meeting-manager.git
    cd meeting-manager
-````
+```
 
 2. **Build & run everything**
 
@@ -147,6 +143,3 @@ If you’ve pushed images to Docker Hub:
 3. Submit a Pull Request
 
 ---
-
-
-
